@@ -39,7 +39,7 @@ function performFileOperations() {
     output: process.stdout
   });
 
-  rl.question('Enter 1 to read a file, 2 to create a file, 3 to delete a file: ', (choice) => {
+  rl.question('Enter 1 to read a file, 2 to write content to a file, 3 to delete a file: ', (choice) => {
     if (choice === '1') {
       rl.question('Enter the file name to read: ', (fileName) => {
         rl.close();
