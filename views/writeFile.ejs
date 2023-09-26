@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Write to a File</title>
+</head>
+<body>
+  <h1>Write Content to a File</h1>
+  <form method="POST" action="/v1/write">
+    <label for="fileName">Enter the file name:</label>
+    <input type="text" id="fileName" name="fileName" required>
+    <br>
+    <label for="fileContent">Enter content for the file:</label>
+    <textarea id="fileContent" name="fileContent" rows="4" cols="50" required></textarea>
+    <br>
+    <button type="submit">Write to File</button>
+  </form>
+</body>
+</html>
