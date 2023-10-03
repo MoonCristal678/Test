@@ -2,17 +2,17 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
-const fs = require('fs');
+const fs = require('fs').promises; // Use Promises version of fs
 const path = require('path');
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.set('view engine', 'ejs');
 
-// Function to write content to a file.
-function writeFile(filePath, content) {
+// Function to write content to a file using Promises
+async function writeFile(filePath, content) {
   try {
-    fs.writeFileSync(filePath, content, 'utf8');
+    await fs.writeFile(filePath, content, 'utf8');
     console.log(`File '${filePath}' successfully written.`);
   } catch (err) {
     console.error('Error writing to the file:', err.message);
@@ -20,10 +20,10 @@ function writeFile(filePath, content) {
   }
 }
 
-// Function to read and display the content of a file.
-function readFile(filePath) {
+// Function to read and display the content of a file using Promises
+async function readFile(filePath) {
   try {
-    const content = fs.readFileSync(filePath, 'utf8');
+    const content = await fs.readFile(filePath, 'utf8');
     console.log(`File content of '${filePath}':`);
     console.log(content);
     return content;
@@ -33,17 +33,16 @@ function readFile(filePath) {
   }
 }
 
-// Function to delete a file.
-function deleteFile(filePath) {
+// Function to delete a file using Promises
+async function deleteFile(filePath) {
   try {
-    fs.unlinkSync(filePath);
+    await fs.unlink(filePath);
     console.log(`File '${filePath}' successfully deleted.`);
   } catch (err) {
     console.error('Error deleting the file:', err.message);
     throw err;
   }
 }
-
 
 // Serve an HTML page with buttons to perform file operations
 app.get('/', (req, res) => {
@@ -59,12 +58,11 @@ app.get('/', (req, res) => {
       <button onclick="redirectToWriteFile()">Write to a File</button>
       <button onclick="redirectToDeleteFile()">Delete a File</button>
       <button onclick="redirectToApiUsers()">Display JSON Data</button>
+      <button onclick="redirectToAddUser()">Add User</button>
       <script>
-      function redirectToApiUsers() {
-         window.location.href = '/v1/api/users';
-      }
-</script>
-      <script>
+        function redirectToApiUsers() {
+          window.location.href = '/v1/api/users';
+        }
         function redirectToReadFile() {
           window.location.href = '/v1/read';
         }
@@ -74,6 +72,10 @@ app.get('/', (req, res) => {
         function redirectToDeleteFile() {
           window.location.href = '/v1/delete';
         }
+        function redirectToAddUser() {
+          window.location.href = '/v1/add';
+        }
+      
       </script>
     </body>
     </html>
@@ -82,24 +84,67 @@ app.get('/', (req, res) => {
 
 // API Version 1
 const v1Router = express.Router();
-v1Router.get('/api/users', (req, res) => {
-  const jsonData = [
-    { "id": 1, "name": "John" },
-    { "id": 2, "name": "Jane" }
-  ];
-  res.json(jsonData);
+
+const jsonData = [
+  { id: 1, name: 'John' },
+  { id: 2, name: 'Jane' }
+];
+// Route to get JSON data
+v1Router.get('/api/users', async (req, res) => {
+  try {
+    // Simulate an asynchronous operation (e.g., reading from a database)
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    res.json(jsonData);
+  } catch (error) {
+    console.error('Error getting JSON data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Route to render the "Add User" form
+v1Router.get('/add', (req, res) => {
+  res.render('addUser.ejs');
+});
+
+// Route to add a user to the JSON data
+v1Router.post('/api/users', async (req, res) => {
+  const { name, age } = req.body;
+  if (!name || !age) {
+    res.status(400).json({ error: 'Both name and age are required' });
+    return;
+  }
+
+  try {
+    // Simulate an asynchronous operation (e.g., saving to a database)
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const newUser = {
+      id: jsonData.length + 1,
+      name,
+      age: parseInt(age), // Ensure age is a number
+    };
+    jsonData.push(newUser);
+
+    // Send a success message along with the added user
+    res.json({ message: 'User added successfully', user: newUser });
+  } catch (error) {
+    console.error('Error adding a user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 v1Router.get('/read', (req, res) => {
   res.render('readFile.ejs');
 });
 
-v1Router.post('/read', (req, res) => {
+// Using async/await for read route
+v1Router.post('/read', async (req, res) => {
   const fileName = req.body.fileName;
   const filePath = path.join(__dirname, fileName);
 
   try {
-    const fileContent = readFile(filePath);
+    const fileContent = await readFile(filePath);
     res.render('readFile.ejs', { fileContent });
   } catch (err) {
     res.render('readFile.ejs', { readError: 'Error reading the file.' });
@@ -110,12 +155,13 @@ v1Router.get('/write', (req, res) => {
   res.render('writeFile.ejs');
 });
 
-v1Router.post('/write', (req, res) => {
+// Using async/await for write route
+v1Router.post('/write', async (req, res) => {
   const fileName = req.body.fileName;
   const fileContent = req.body.fileContent;
 
   try {
-    writeFile(fileName, fileContent);
+    await writeFile(fileName, fileContent);
     res.send(`File '${fileName}' created with the provided content.`);
   } catch (err) {
     res.status(500).send('Error creating the file.');
@@ -126,11 +172,12 @@ v1Router.get('/delete', (req, res) => {
   res.render('deleteFile.ejs');
 });
 
-v1Router.post('/delete', (req, res) => {
+// Using async/await for delete route
+v1Router.post('/delete', async (req, res) => {
   const fileName = req.body.fileName;
 
   try {
-    deleteFile(fileName);
+    await deleteFile(fileName);
     res.send(`File '${fileName}' deleted.`);
   } catch (err) {
     res.status(500).send('Error deleting the file.');
