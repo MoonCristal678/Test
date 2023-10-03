@@ -1,13 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <!-- Title for the web page -->
   <title>Delete File</title>
 </head>
 <body>
+  <!-- Heading for the delete file section -->
   <h1>Delete a File</h1>
+  
+  <!-- Form for submitting data to the server to delete a file -->
   <form method="POST" action="/v1/delete">
+    <!-- Label for the file name input field -->
     <label for="fileName">Enter the file name to delete:</label>
+    
+    <!-- Input field for entering the file name to be deleted -->
     <input type="text" id="fileName" name="fileName" required>
+    
+    <!-- Button to submit the form and delete the file -->
     <button type="submit">Delete File</button>
   </form>
 </body>

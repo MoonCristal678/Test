@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Title for the web page -->
+  <title>Add User</title>
+</head>
+<body>
+  <!-- Heading for the add user section -->
+  <h1>Add User</h1>
+  
+  <!-- Form for submitting data to the server to add a user -->
+  <form action="/v1/api/users" method="post">
+    <!-- Label for the name input field -->
+    <label for="name">Name:</label>
+    
+    <!-- Input field for entering the user's name -->
+    <input type="text" id="name" name="name" required><br>
+    
+    <!-- Label for the age input field -->
+    <label for="age">Age:</label>
+    
+    <!-- Input field for entering the user's age -->
+    <input type="number" id="age" name="age" required><br>
+    
+    <!-- Button to submit the form and add the user -->
+    <button type="submit">Add User</button>
+  </form>
+</body>
+</html>
