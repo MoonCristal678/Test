@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Read File</title>
+</head>
+<body>
+  <h1>Read a File</h1>
+  
+  <form method="POST" action="/v1/read">
+    <label for="fileName">Select File to Read:</label>
+    <select id="fileName" name="fileName" required>
+        <% fileNames.forEach(fileName => { %>
+            <option value="<%= fileName %>"><%= fileName %></option>
+        <% }); %>
+    </select>
+    <button type="submit">Read File</button>
+  </form>
+  
+  <h2>File Content:</h2>
+  <pre id="fileContentPlaceholder"></pre>
+  
+  <p id="readErrorPlaceholder"></p>
+
+  <script>
+    const fileContentPlaceholder = document.getElementById('fileContentPlaceholder');
+    const readErrorPlaceholder = document.getElementById('readErrorPlaceholder');
+
+    fileContentPlaceholder.textContent = ''; // Set the file content here
+    readErrorPlaceholder.textContent = '';   // Set the read error message here
+  </script>
+</body>
+</html>

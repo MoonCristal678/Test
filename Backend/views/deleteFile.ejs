@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Delete File</title>
+</head>
+<body>
+  <h1>Delete a File</h1>
+  
+  <form method="POST" action="/v1/delete">
+    <label for="fileName">Select File to Delete:</label>
+    <select id="fileName" name="fileName" required>
+        <% fileNames.forEach(fileName => { %>
+            <option value="<%= fileName %>"><%= fileName %></option>
+        <% }); %>
+    </select>
+    <button type="submit">Delete File</button>
+  </form>
+</body>
+</html>
