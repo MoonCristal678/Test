@@ -23,7 +23,6 @@ let db;
         console.error('Error occurred while connecting to MongoDB:', err);
     }
 })();
-
 app.use((req, res, next) => {
     console.log(`${req.method} request for ${req.url}`);
     next();
