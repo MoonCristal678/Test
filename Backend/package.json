@@ -5,7 +5,7 @@
   "main": "fileOperations.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon fileOperations.js"
+    "start": "node fileOperations.js"
   },
   "keywords": [],
   "author": "",
