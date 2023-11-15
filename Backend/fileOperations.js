@@ -10,7 +10,7 @@ app.use(express.json());
 app.set('view engine', 'ejs');
 app.use(methodOverride('_method'));
 
-const uri = "mongodb://127.0.0.1:27017/";
+const uri = "mongodb://localhost:27017/";
 let db;
 
 (async function () {
