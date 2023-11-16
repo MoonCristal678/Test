@@ -10,7 +10,7 @@ app.use(express.json());
 app.set('view engine', 'ejs');
 app.use(methodOverride('_method'));
 
-const uri = "mongodb://0.0.0.0:27017/";
+const uri = "mongodb+srv://blackkrystal438:DemonSlayer1@fileanduserdata.3ynz8zm.mongodb.net/";
 let db;
 
 (async function () {
