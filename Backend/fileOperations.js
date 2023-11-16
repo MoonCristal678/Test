@@ -61,6 +61,7 @@ v1Router.post('/api/users', async (req, res) => {
 
 // Get all users
 v1Router.get('/api/users', async (req, res) => {
+    console.log("Backend responded");
     const collection = db.collection('users');
     const users = await collection.find({}).toArray();
     res.json(users);

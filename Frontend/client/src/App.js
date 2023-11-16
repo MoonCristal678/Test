@@ -14,8 +14,9 @@ function App() {
   useEffect(() => {
     async function fetchJsonData() {
       try {
-        const response = await fetch('/v1/api/users'); // Update the URL as needed
+        const response = await fetch('https://backend-j7qq.onrender.com/v1/api/users'); // Update the URL as needed
         const data = await response.json();
+        console.log(data);
         setJsonData(data);
       } catch (error) {
         console.error('Error fetching JSON data:', error);
@@ -32,7 +33,7 @@ function App() {
     }
 
     try {
-      await fetch('/v1/write', {
+      await fetch('https://backend-j7qq.onrender.com/v1/write', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -57,7 +58,7 @@ function App() {
     }
   
     try {
-      const response = await fetch(`/v1/read`, {
+      const response = await fetch(`https://backend-j7qq.onrender.com/v1/read`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,7 +76,7 @@ function App() {
 
   const handleDeleteFile = async (fileName) => {
     try {
-      await fetch(`/v1/delete`, {
+      await fetch(`https://backend-j7qq.onrender.com/v1/delete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +102,7 @@ function App() {
         name: newName,
         age: newAge,
       };
-      await fetch('/v1/api/users', {
+      await fetch('https://backend-j7qq.onrender.com/v1/api/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
