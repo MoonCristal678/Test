@@ -14,9 +14,8 @@ function App() {
   useEffect(() => {
     async function fetchJsonData() {
       try {
-        const response = await fetch('https://backend-j7qq.onrender.com/v1/api/users'); // Update the URL as needed
+        const response = await fetch('https://backend-j7qq.onrender.com/v1/api/users');
         const data = await response.json();
-        console.log(data);
         setJsonData(data);
       } catch (error) {
         console.error('Error fetching JSON data:', error);
@@ -26,28 +25,33 @@ function App() {
     fetchJsonData();
   }, []);
 
+  const handleApiRequest = async (url, method, body) => {
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      return response;
+    } catch (error) {
+      console.error(`Error performing ${method} request:`, error);
+    }
+  };
+
   const handleCreateFile = async () => {
     if (!fileName || !fileContent) {
       alert('Please enter both a file name and content.');
       return;
     }
 
-    try {
-      await fetch('https://backend-j7qq.onrender.com/v1/write', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ fileName, fileContent }),
-      });
-      setCreatedFiles((prevFiles) => ({
-        ...prevFiles,
-        [fileName]: fileContent,
-      }));
+    const response = await handleApiRequest('https://backend-j7qq.onrender.com/v1/write', 'POST', { fileName, fileContent });
+
+    if (response) {
+      setCreatedFiles((prevFiles) => ({ ...prevFiles, [fileName]: fileContent }));
       setFileName('');
       setFileContent('');
-    } catch (error) {
-      console.error('Error creating file:', error);
     }
   };
 
@@ -56,38 +60,22 @@ function App() {
       alert('Please enter a file name.');
       return;
     }
-  
-    try {
-      const response = await fetch(`https://backend-j7qq.onrender.com/v1/read`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ fileName: readFileName }),
-      });
+
+    const response = await handleApiRequest('https://backend-j7qq.onrender.com/v1/read', 'POST', { fileName: readFileName });
+
+    if (response) {
       const data = await response.text();
-      setReadContent(data.replace(/<\/?[^>]+(>|$)/g, ""));
-    } catch (error) {
-      console.error('Error reading file:', error);
+      setReadContent(data.replace(/<\/?[^>]+(>|$)/g, ''));
     }
   };
-  
-  
 
-  const handleDeleteFile = async (fileName) => {
-    try {
-      await fetch(`https://backend-j7qq.onrender.com/v1/delete`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ fileName }),
-      });
+  const handleDeleteFile = async (fileNameToDelete) => {
+    const response = await handleApiRequest('https://backend-j7qq.onrender.com/v1/delete', 'POST', { fileName: fileNameToDelete });
+
+    if (response) {
       const updatedFiles = { ...createdFiles };
-      delete updatedFiles[fileName];
+      delete updatedFiles[fileNameToDelete];
       setCreatedFiles(updatedFiles);
-    } catch (error) {
-      console.error('Error deleting file:', error);
     }
   };
 
@@ -97,25 +85,46 @@ function App() {
       return;
     }
 
-    try {
-      const newUser = {
-        name: newName,
-        age: newAge,
-      };
-      await fetch('https://backend-j7qq.onrender.com/v1/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newUser),
-      });
+    const newUser = { name: newName, age: newAge };
+    const response = await handleApiRequest('https://backend-j7qq.onrender.com/v1/api/users', 'POST', newUser);
+
+    if (response) {
       setJsonData((prevData) => [...prevData, newUser]);
       setNewName('');
       setNewAge('');
-    } catch (error) {
-      console.error('Error adding user:', error);
     }
   };
+
+  const renderInputField = (name, value, onChange, placeholder) => (
+    <input type="text" name={name} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+  );
+
+  const renderButton = (text, onClick) => (
+    <button className="app-button" onClick={onClick}>
+      {text}
+    </button>
+  );
+
+  const renderFileList = () => (
+    <ul className="app-file-list">
+      {Object.entries(createdFiles).map(([fileName, fileContent]) => (
+        <li key={fileName}>
+          {fileName}
+          {renderButton('Delete', () => handleDeleteFile(fileName))}
+        </li>
+      ))}
+    </ul>
+  );
+
+  const renderUserData = () => (
+    <ul className="app-file-list">
+      {jsonData.map((user) => (
+        <li key={user.id}>
+          ID: {user.id}, Name: {user.name}, Age: {user.age}
+        </li>
+      ))}
+    </ul>
+  );
 
   return (
     <div className="app-container">
@@ -123,36 +132,15 @@ function App() {
 
       <div className="app-section">
         <h2>Create File</h2>
-        <input
-          type="text"
-          name="fileName"
-          value={fileName}
-          onChange={(e) => setFileName(e.target.value)}
-          placeholder="Enter file name"
-        />
-        <textarea
-          name="fileContent"
-          value={fileContent}
-          onChange={(e) => setFileContent(e.target.value)}
-          placeholder="Enter file content"
-        />
-        <button className="app-button" onClick={handleCreateFile}>
-          Create File
-        </button>
+        {renderInputField('fileName', fileName, setFileName, 'Enter file name')}
+        <textarea name="fileContent" value={fileContent} onChange={(e) => setFileContent(e.target.value)} placeholder="Enter file content" />
+        {renderButton('Create File', handleCreateFile)}
       </div>
 
       <div className="app-section">
         <h2>Read File</h2>
-        <input
-          type="text"
-          name="readFileName"
-          value={readFileName}
-          onChange={(e) => setReadFileName(e.target.value)}
-          placeholder="Enter file name"
-        />
-        <button className="app-button" onClick={handleReadFile}>
-          Read File
-        </button>
+        {renderInputField('readFileName', readFileName, setReadFileName, 'Enter file name')}
+        {renderButton('Read File', handleReadFile)}
         <div>
           {readContent && <pre className="app-file-content">{readContent}</pre>}
           {!readContent && <p className="app-file-not-found">File not found.</p>}
@@ -161,48 +149,19 @@ function App() {
 
       <div className="app-section">
         <h2>Created Files</h2>
-        <ul className="app-file-list">
-          {Object.keys(createdFiles).map((fileName) => (
-            <li key={fileName}>
-              {fileName}
-              <button className="app-delete-button" onClick={() => handleDeleteFile(fileName)}>
-                Delete
-              </button>
-            </li>
-          ))}
-        </ul>
+        {renderFileList()}
       </div>
 
       <div className="app-section">
         <h2>Add User to JSON Data</h2>
-        <input
-          type="text"
-          name="newName"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          placeholder="Enter name"
-        />
-        <input
-          type="text"
-          name="newAge"
-          value={newAge}
-          onChange={(e) => setNewAge(e.target.value)}
-          placeholder="Enter age"
-        />
-        <button className="app-button" onClick={handleAddUser}>
-          Add User
-        </button>
+        {renderInputField('newName', newName, setNewName, 'Enter name')}
+        {renderInputField('newAge', newAge, setNewAge, 'Enter age')}
+        {renderButton('Add User', handleAddUser)}
       </div>
 
       <div className="app-json-section">
         <h2>JSON Data</h2>
-        <ul className="app-file-list">
-          {jsonData.map((user) => (
-            <li key={user.id}>
-              ID: {user.id}, Name: {user.name}, Age: {user.age}
-            </li>
-          ))}
-        </ul>
+        {renderUserData()}
       </div>
     </div>
   );
