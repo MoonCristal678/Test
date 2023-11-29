@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
-  // State variables
   const [fileName, setFileName] = useState('');
   const [fileContent, setFileContent] = useState('');
   const [readFileName, setReadFileName] = useState('');
@@ -12,22 +11,20 @@ function App() {
   const [newName, setNewName] = useState('');
   const [newAge, setNewAge] = useState('');
 
-  // Fetch JSON data on component mount
   useEffect(() => {
-    async function fetchJsonData() {
-      try {
-        const response = await fetch('https://backend-j7qq.onrender.com/v1/api/users');
-        const data = await response.json();
-        setJsonData(data);
-      } catch (error) {
-        console.error('Error fetching JSON data:', error);
-      }
-    }
-
     fetchJsonData();
   }, []);
 
-  // Function to handle API requests
+  const fetchJsonData = async () => {
+    try {
+      const response = await fetch('https://backend-j7qq.onrender.com/v1/api/users');
+      const data = await response.json();
+      setJsonData(data);
+    } catch (error) {
+      console.error('Error fetching JSON data:', error);
+    }
+  };
+
   const handleApiRequest = async (url, method, body) => {
     try {
       const response = await fetch(url, {
@@ -43,7 +40,6 @@ function App() {
     }
   };
 
-  // File-related functions
   const handleCreateFile = async () => {
     if (!fileName || !fileContent) {
       alert('Please enter both a file name and content.');
@@ -74,15 +70,12 @@ function App() {
 
   const handleDeleteFile = async (fileNameToDelete) => {
     const response = await handleApiRequest('https://backend-j7qq.onrender.com/v1/delete', 'POST', { fileName: fileNameToDelete });
-  
+
     if (response) {
-      const updatedFiles = { ...createdFiles };
-      delete updatedFiles[fileNameToDelete];
-      setCreatedFiles(updatedFiles);
+      updateCreatedFiles(fileNameToDelete);
     }
   };
-  
-  // User-related functions
+
   const handleAddUser = async () => {
     if (!newName || !newAge) {
       alert('Please enter both a name and age.');
@@ -98,7 +91,6 @@ function App() {
     }
   };
 
-  // Helper functions
   const updateCreatedFiles = (newFileName, newFileContent) => {
     setCreatedFiles((prevFiles) => ({ ...prevFiles, [newFileName]: newFileContent }));
   };
@@ -117,7 +109,6 @@ function App() {
     setNewAge('');
   };
 
-  // Render functions
   const renderInputField = (name, value, onChange, placeholder) => (
     <input type="text" name={name} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
   );
