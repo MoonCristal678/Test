@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+const WRITE_URL = 'https://backend-j7qq.onrender.com/v1/write';
+const READ_URL = 'https://backend-j7qq.onrender.com/v1/read';
+const DELETE_URL = 'https://backend-j7qq.onrender.com/v1/delete';
+const USERS_URL = 'https://backend-j7qq.onrender.com/v1/api/users';
+
 function App() {
   const [fileName, setFileName] = useState('');
   const [fileContent, setFileContent] = useState('');
@@ -14,16 +19,6 @@ function App() {
   useEffect(() => {
     fetchJsonData();
   }, []);
-
-  const fetchJsonData = async () => {
-    try {
-      const response = await fetch('https://backend-j7qq.onrender.com/v1/api/users');
-      const data = await response.json();
-      setJsonData(data);
-    } catch (error) {
-      console.error('Error fetching JSON data:', error);
-    }
-  };
 
   const handleApiRequest = async (url, method, body) => {
     try {
@@ -40,54 +35,10 @@ function App() {
     }
   };
 
-  const handleCreateFile = async () => {
-    if (!fileName || !fileContent) {
-      alert('Please enter both a file name and content.');
-      return;
-    }
-
-    const response = await handleApiRequest('https://backend-j7qq.onrender.com/v1/write', 'POST', { fileName, fileContent });
-
+  const fetchData = async (url, method, body, successCallback) => {
+    const response = await handleApiRequest(url, method, body);
     if (response) {
-      updateCreatedFiles(fileName, fileContent);
-      clearFileInputs();
-    }
-  };
-
-  const handleReadFile = async () => {
-    if (!readFileName) {
-      alert('Please enter a file name.');
-      return;
-    }
-
-    const response = await handleApiRequest('https://backend-j7qq.onrender.com/v1/read', 'POST', { fileName: readFileName });
-
-    if (response) {
-      const data = await response.text();
-      setReadContent(data.replace(/<\/?[^>]+(>|$)/g, ''));
-    }
-  };
-
-  const handleDeleteFile = async (fileNameToDelete) => {
-    const response = await handleApiRequest('https://backend-j7qq.onrender.com/v1/delete', 'POST', { fileName: fileNameToDelete });
-
-    if (response) {
-      updateCreatedFiles(fileNameToDelete);
-    }
-  };
-
-  const handleAddUser = async () => {
-    if (!newName || !newAge) {
-      alert('Please enter both a name and age.');
-      return;
-    }
-
-    const newUser = { name: newName, age: newAge };
-    const response = await handleApiRequest('https://backend-j7qq.onrender.com/v1/api/users', 'POST', newUser);
-
-    if (response) {
-      updateJsonData(newUser);
-      clearUserInputs();
+      successCallback();
     }
   };
 
@@ -107,6 +58,57 @@ function App() {
   const clearUserInputs = () => {
     setNewName('');
     setNewAge('');
+  };
+
+  const handleCreateFile = async () => {
+    if (!fileName || !fileContent) {
+      alert('Please enter both a file name and content.');
+      return;
+    }
+
+    const successCallback = () => {
+      updateCreatedFiles(fileName, fileContent);
+      clearFileInputs();
+    };
+
+    fetchData(WRITE_URL, 'POST', { fileName, fileContent }, successCallback);
+  };
+
+  const handleReadFile = async () => {
+    if (!readFileName) {
+      alert('Please enter a file name.');
+      return;
+    }
+
+    const successCallback = async () => {
+      const data = await (await response).text();
+      setReadContent(data.replace(/<\/?[^>]+(>|$)/g, ''));
+    };
+
+    fetchData(READ_URL, 'POST', { fileName: readFileName }, successCallback);
+  };
+
+  const handleDeleteFile = async (fileNameToDelete) => {
+    const successCallback = () => {
+      updateCreatedFiles(fileNameToDelete);
+    };
+
+    fetchData(DELETE_URL, 'POST', { fileName: fileNameToDelete }, successCallback);
+  };
+
+  const handleAddUser = async () => {
+    if (!newName || !newAge) {
+      alert('Please enter both a name and age.');
+      return;
+    }
+
+    const newUser = { name: newName, age: newAge };
+    const successCallback = () => {
+      updateJsonData(newUser);
+      clearUserInputs();
+    };
+
+    fetchData(USERS_URL, 'POST', newUser, successCallback);
   };
 
   const renderInputField = (name, value, onChange, placeholder) => (
