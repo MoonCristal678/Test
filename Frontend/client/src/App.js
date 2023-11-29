@@ -1,5 +1,8 @@
+// App.js
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import { api } from './api';
+import * as utils from './utils';
 
 const WRITE_URL = 'https://backend-j7qq.onrender.com/v1/write';
 const READ_URL = 'https://backend-j7qq.onrender.com/v1/read';
@@ -12,7 +15,7 @@ function App() {
   const [readFileName, setReadFileName] = useState('');
   const [readContent, setReadContent] = useState('');
   const [createdFiles, setCreatedFiles] = useState({});
-  const [jsonData, setJsonData] = useState([]);
+  const [jsonData, setJsonData] = useState('');
   const [newName, setNewName] = useState('');
   const [newAge, setNewAge] = useState('');
 
@@ -20,44 +23,14 @@ function App() {
     fetchJsonData();
   }, []);
 
-  const handleApiRequest = async (url, method, body) => {
+  const fetchJsonData = async () => {
     try {
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-      return response;
+      const response = await fetch(USERS_URL);
+      const data = await response.json();
+      setJsonData(data);
     } catch (error) {
-      console.error(`Error performing ${method} request:`, error);
+      console.error('Error fetching JSON data:', error);
     }
-  };
-
-  const fetchData = async (url, method, body, successCallback) => {
-    const response = await handleApiRequest(url, method, body);
-    if (response) {
-      successCallback();
-    }
-  };
-
-  const updateCreatedFiles = (newFileName, newFileContent) => {
-    setCreatedFiles((prevFiles) => ({ ...prevFiles, [newFileName]: newFileContent }));
-  };
-
-  const updateJsonData = (newUser) => {
-    setJsonData((prevData) => [...prevData, newUser]);
-  };
-
-  const clearFileInputs = () => {
-    setFileName('');
-    setFileContent('');
-  };
-
-  const clearUserInputs = () => {
-    setNewName('');
-    setNewAge('');
   };
 
   const handleCreateFile = async () => {
@@ -67,11 +40,11 @@ function App() {
     }
 
     const successCallback = () => {
-      updateCreatedFiles(fileName, fileContent);
-      clearFileInputs();
+      utils.updateCreatedFiles(fileName, fileContent, setCreatedFiles);
+      utils.clearFileInputs(setFileName, setFileContent);
     };
 
-    fetchData(WRITE_URL, 'POST', { fileName, fileContent }, successCallback);
+    api.fetchData(WRITE_URL, 'POST', { fileName, fileContent }, successCallback);
   };
 
   const handleReadFile = async () => {
@@ -81,19 +54,20 @@ function App() {
     }
 
     const successCallback = async () => {
-      const data = await (await response).text();
+      const response = await api.handleApiRequest(READ_URL, 'POST', { fileName: readFileName });
+      const data = await response.text();
       setReadContent(data.replace(/<\/?[^>]+(>|$)/g, ''));
     };
 
-    fetchData(READ_URL, 'POST', { fileName: readFileName }, successCallback);
+    api.fetchData(READ_URL, 'POST', { fileName: readFileName }, successCallback);
   };
 
   const handleDeleteFile = async (fileNameToDelete) => {
     const successCallback = () => {
-      updateCreatedFiles(fileNameToDelete);
+      utils.updateCreatedFiles(fileNameToDelete, setCreatedFiles);
     };
 
-    fetchData(DELETE_URL, 'POST', { fileName: fileNameToDelete }, successCallback);
+    api.fetchData(DELETE_URL, 'POST', { fileName: fileNameToDelete }, successCallback);
   };
 
   const handleAddUser = async () => {
@@ -104,11 +78,11 @@ function App() {
 
     const newUser = { name: newName, age: newAge };
     const successCallback = () => {
-      updateJsonData(newUser);
-      clearUserInputs();
+      utils.updateJsonData(newUser, setJsonData);
+      utils.clearUserInputs(setNewName, setNewAge);
     };
 
-    fetchData(USERS_URL, 'POST', newUser, successCallback);
+    api.fetchData(USERS_URL, 'POST', newUser, successCallback);
   };
 
   const renderInputField = (name, value, onChange, placeholder) => (
