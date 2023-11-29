@@ -87,64 +87,66 @@ v1Router.get('/delete', async (req, res) => {
     await renderFileForm(req, res, 'deleteFile.ejs');
 });
 
-// Using async/await for read and delete routes
 const handleReadOrDelete = async (req, res, operation) => {
     const fileName = req.body.fileName;
-
     const collection = db.collection('files');
     const query = { name: fileName };
-
-    if (operation === 'read') {
+  
+    try {
+      if (operation === 'read') {
         const fileContent = await collection.findOne(query);
         return fileContent
-            ? res.send(`<h2>File Content of '${fileName}':</h2><pre>${fileContent.content}</pre>`)
-            : res.render('readFile.ejs', { readError: 'File not found.' });
-    } else if (operation === 'delete') {
+          ? res.send(`<h2>File Content of '${fileName}':</h2><pre>${fileContent.content}</pre>`)
+          : res.render('readFile.ejs', { readError: 'File not found.' });
+      } else if (operation === 'delete') {
         const result = await collection.deleteOne(query);
         return result.deletedCount > 0
-            ? res.send(`File '${fileName}' deleted.`)
-            : res.status(404).send('File not found.');
+          ? res.send(`File '${fileName}' deleted.`)
+          : res.status(404).send('File not found.');
+      }
+    } catch (error) {
+      console.error(`Error during ${operation} operation:`, error);
+      res.status(500).send('Something went wrong!');
     }
-};
-
-v1Router.post('/read', async (req, res) => {
-    await handleReadOrDelete(req, res, 'read');
-});
-
-v1Router.post('/delete', async (req, res) => {
-    await handleReadOrDelete(req, res, 'delete');
-});
-
-// Render form to write to a file
-v1Router.get('/write', (req, res) => {
+  };
+  
+  // Combine read and delete routes
+  v1Router.post('/:operation(read|delete)', async (req, res) => {
+    const operation = req.params.operation;
+    await handleReadOrDelete(req, res, operation);
+  });
+  
+  // Render form to write to a file
+  v1Router.get('/write', (req, res) => {
     res.render('writeFile.ejs');
-});
-
-// Using async/await for write route
-v1Router.post('/write', async (req, res) => {
+  });
+  
+  // Using async/await for write route
+  v1Router.post('/write', async (req, res) => {
     const fileName = req.body.fileName;
     const fileContent = req.body.fileContent;
-
+  
     const collection = db.collection('files');
     await collection.updateOne(
-        { name: fileName },
-        { $set: { content: fileContent } },
-        { upsert: true }
+      { name: fileName },
+      { $set: { content: fileContent } },
+      { upsert: true }
     );
-
+  
     res.send(`File '${fileName}' created with the provided content.`);
-});
-
-// Use API versioning
-app.use('/v1', v1Router);
-
-// Define error handler
-app.use((err, req, res, next) => {
+  });
+  
+  // Use API versioning
+  app.use('/v1', v1Router);
+  
+  // Define error handler
+  app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send('Something went wrong!');
-});
-
-// Start the server
-app.listen(port, () => {
+  });
+  
+  // Start the server
+  app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
-});
+  });
+  
