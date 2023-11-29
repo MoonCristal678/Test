@@ -1,11 +1,13 @@
 import express from 'express';
 import methodOverride from 'method-override';
-import { MongoClient, ObjectId } from 'mongodb';
+import { MongoClient } from 'mongodb';
 import cors from 'cors';
+
 const app = express();
 const port = 3000;
-app.use(cors()); 
-app.use(express.urlencoded());
+
+app.use(cors());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.set('view engine', 'ejs');
 app.use(methodOverride('_method'));
@@ -18,11 +20,11 @@ let db;
         const client = await MongoClient.connect(uri, { useUnifiedTopology: true });
         console.log('Connected to MongoDB.');
         db = client.db("fileAndUserData");
-
     } catch (err) {
         console.error('Error occurred while connecting to MongoDB:', err);
     }
 })();
+
 app.use((req, res, next) => {
     console.log(`${req.method} request for ${req.url}`);
     next();
@@ -30,11 +32,13 @@ app.use((req, res, next) => {
 
 // Render home page with links to file and user operations
 app.get('/', (req, res) => {
-    res.send(`<button ><a href="/v1/read"> Read a File </a> </button> 
-              <button ><a href="/v1/write"> Write to a File </a> </button>
-              <button ><a href="/v1/delete"> Delete a File </a> </button>
-              <button ><a href="/v1/api/users"> Display JSON Data </a> </button>
-              <button ><a href="/v1/add"> Add User </a> </button>`);
+    res.send(`
+        <button><a href="/v1/read">Read a File</a></button>
+        <button><a href="/v1/write">Write to a File</a></button>
+        <button><a href="/v1/delete">Delete a File</a></button>
+        <button><a href="/v1/api/users">Display JSON Data</a></button>
+        <button><a href="/v1/add">Add User</a></button>
+    `);
 });
 
 // API Version 1
@@ -67,29 +71,49 @@ v1Router.get('/api/users', async (req, res) => {
     res.json(users);
 });
 
-// Render form to read a file
-v1Router.get('/read', async (req, res) => {
+// Render form to read or delete a file
+const renderFileForm = async (req, res, template) => {
     const collection = db.collection('files');
     const files = await collection.find({}, { projection: { _id: 0, name: 1 } }).toArray();
     const fileNames = files.map(file => file.name);
-    res.render('readFile.ejs', { fileNames });
+    res.render(template, { fileNames });
+};
+
+v1Router.get('/read', async (req, res) => {
+    await renderFileForm(req, res, 'readFile.ejs');
 });
 
-// Using async/await for read route
-// Using async/await for read route
+v1Router.get('/delete', async (req, res) => {
+    await renderFileForm(req, res, 'deleteFile.ejs');
+});
+
+// Using async/await for read and delete routes
+const handleReadOrDelete = async (req, res, operation) => {
+    const fileName = req.body.fileName;
+
+    const collection = db.collection('files');
+    const query = { name: fileName };
+
+    if (operation === 'read') {
+        const fileContent = await collection.findOne(query);
+        return fileContent
+            ? res.send(`<h2>File Content of '${fileName}':</h2><pre>${fileContent.content}</pre>`)
+            : res.render('readFile.ejs', { readError: 'File not found.' });
+    } else if (operation === 'delete') {
+        const result = await collection.deleteOne(query);
+        return result.deletedCount > 0
+            ? res.send(`File '${fileName}' deleted.`)
+            : res.status(404).send('File not found.');
+    }
+};
+
 v1Router.post('/read', async (req, res) => {
-  const fileName = req.body.fileName;
-
-  const collection = db.collection('files');
-  const fileContent = await collection.findOne({ name: fileName });
-
-  if (fileContent) {
-      res.send(`<h2>File Content of '${fileName}':</h2><pre>${fileContent.content}</pre>`);
-  } else {
-      res.render('readFile.ejs', { readError: 'File not found.' });
-  }
+    await handleReadOrDelete(req, res, 'read');
 });
 
+v1Router.post('/delete', async (req, res) => {
+    await handleReadOrDelete(req, res, 'delete');
+});
 
 // Render form to write to a file
 v1Router.get('/write', (req, res) => {
@@ -109,28 +133,6 @@ v1Router.post('/write', async (req, res) => {
     );
 
     res.send(`File '${fileName}' created with the provided content.`);
-});
-
-// Render form to delete a file
-v1Router.get('/delete', async (req, res) => {
-    const collection = db.collection('files');
-    const files = await collection.find({}, { projection: { _id: 0, name: 1 } }).toArray();
-    const fileNames = files.map(file => file.name);
-    res.render('deleteFile.ejs', { fileNames });
-});
-
-// Using async/await for delete route
-v1Router.post('/delete', async (req, res) => {
-    const fileName = req.body.fileName;
-
-    const collection = db.collection('files');
-    const result = await collection.deleteOne({ name: fileName });
-
-    if (result.deletedCount > 0) {
-        res.send(`File '${fileName}' deleted.`);
-    } else {
-        res.status(404).send('File not found.');
-    }
 });
 
 // Use API versioning
