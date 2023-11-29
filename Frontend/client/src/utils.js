@@ -1,4 +1,6 @@
-// utils.js
+
+
+
 export const updateCreatedFiles = (newFileName, newFileContent, setCreatedFiles) => {
     setCreatedFiles((prevFiles) => ({ ...prevFiles, [newFileName]: newFileContent }));
   };
